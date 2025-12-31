@@ -1,0 +1,36 @@
+{
+  "name": "effect-span-tree-demo",
+  "version": "1.0.0",
+  "description": "Effect-TS SpanTree demo - visualize deeply nested traces with automatic path tracking",
+  "type": "module",
+  "main": "dist/index.js",
+  "scripts": {
+    "prepare": "npx @effect/language-service apply-patch",
+    "build": "tsc",
+    "dev": "tsx watch src/index.ts",
+    "start": "node dist/index.js",
+    "typecheck": "tsc --noEmit"
+  },
+  "keywords": [
+    "effect",
+    "effect-ts",
+    "opentelemetry",
+    "tracing",
+    "span-tree",
+    "observability"
+  ],
+  "author": "",
+  "license": "MIT",
+  "packageManager": "pnpm@10.23.0",
+  "dependencies": {
+    "@effect/platform": "^0.93.6",
+    "@effect/platform-node": "^0.103.0",
+    "effect": "npm:@clayroach/effect@latest"
+  },
+  "devDependencies": {
+    "@effect/language-service": "^0.59.0",
+    "@types/node": "^24.10.1",
+    "tsx": "^4.19.0",
+    "typescript": "^5.9.3"
+  }
+}
