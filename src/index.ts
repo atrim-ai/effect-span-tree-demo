@@ -177,7 +177,7 @@ const router = HttpRouter.empty.pipe(
 // Server Setup
 // ============================================================================
 
-const ServerLive = NodeHttpServer.layer(() => Http.createServer(), { port: 3000 })
+const ServerLive = NodeHttpServer.layer(() => Http.createServer(), { port: 0 })
 
 const HttpLive = router.pipe(
   HttpServer.serve(),
@@ -195,17 +195,11 @@ Effect-TS SpanTree Demo
 Demonstrates Effect-TS/effect#5926 solution
 ${"=".repeat(60)}
 
-Starting server on http://localhost:3000
-
 Endpoints:
   GET /                  - Welcome message
   GET /health            - Health check
   GET /api/users/:id     - Simple 6-level nested span example
   GET /api/complex/:id   - Complex 10+ level notification pipeline
-
-Try these commands:
-  curl http://localhost:3000/api/users/1
-  curl http://localhost:3000/api/complex/1
 
 ${"=".repeat(60)}
 Note: This is the base version without instrumentation.
