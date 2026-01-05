@@ -22,11 +22,41 @@
 
 import { HttpRouter, HttpServer, HttpServerResponse } from "@effect/platform"
 import { NodeHttpServer, NodeRuntime } from "@effect/platform-node"
+import { NodeSdk, Tracer, Resource as OtelResource } from "@effect/opentelemetry"
+import * as SpanTree from "@effect/opentelemetry/SpanTree"
+import { OTLPTraceExporter } from "@opentelemetry/exporter-trace-otlp-http"
+import { BatchSpanProcessor } from "@opentelemetry/sdk-trace-base"
 import { Effect, Layer } from "effect"
 import * as Http from "node:http"
 
 import { fetchUser } from "./services/user.js"
 import { sendNotifications } from "./services/notification.js"
+
+// ============================================================================
+// OpenTelemetry Configuration
+// ============================================================================
+
+const otlpEndpoint = process.env.OTEL_EXPORTER_OTLP_ENDPOINT || "http://localhost:4318"
+
+const ResourceLive = OtelResource.layer({
+  serviceName: process.env.OTEL_SERVICE_NAME || "effect-span-tree-demo",
+  serviceVersion: "1.0.0"
+})
+
+const TracerProviderLive = NodeSdk.layerTracerProvider(
+  new BatchSpanProcessor(
+    new OTLPTraceExporter({
+      url: `${otlpEndpoint}/v1/traces`
+    })
+  )
+)
+
+const OtelTracerLive = Tracer.layer.pipe(
+  Layer.provide(TracerProviderLive),
+  Layer.provide(ResourceLive)
+)
+
+const SpanTreeLive = SpanTree.layerTracer().pipe(Layer.provide(OtelTracerLive))
 
 // ============================================================================
 // HTTP Routes
@@ -69,6 +99,7 @@ const userRoute = HttpRouter.get(
 
     const result = yield* fetchUser(id).pipe(
       Effect.withSpan("api.getUser"),
+      SpanTree.withSummary,
       Effect.either
     )
 
@@ -145,6 +176,7 @@ const complexRoute = HttpRouter.get(
 
     const result = yield* complexOperation.pipe(
       Effect.withSpan("api.complexOperation"),
+      SpanTree.withSummary,
       Effect.either
     )
 
@@ -185,6 +217,8 @@ const HttpLive = router.pipe(
   Layer.provide(ServerLive)
 )
 
+const MainLive = HttpLive.pipe(Layer.provideMerge(SpanTreeLive))
+
 // ============================================================================
 // Main
 // ============================================================================
@@ -206,4 +240,4 @@ Note: This is the base version without instrumentation.
 ${"=".repeat(60)}
 `)
 
-NodeRuntime.runMain(Layer.launch(HttpLive))
+NodeRuntime.runMain(Layer.launch(MainLive))
