@@ -20,13 +20,33 @@
  * - GET /api/complex/:id - Complex 10-level notification pipeline
  */
 
+import { initializeInstrumentation } from "@atrim/instrument-node"
+
+await initializeInstrumentation({
+  serviceName: "effect-span-tree-demo",
+  serviceVersion: "1.0.0",
+  otlp: {
+    endpoint: process.env.OTEL_EXPORTER_OTLP_ENDPOINT || "http://localhost:4318"
+  }
+})
+
 import { HttpRouter, HttpServer, HttpServerResponse } from "@effect/platform"
 import { NodeHttpServer, NodeRuntime } from "@effect/platform-node"
+import { Tracer, Resource as OtelResource } from "@effect/opentelemetry"
+import * as SpanTree from "@effect/opentelemetry/SpanTree"
 import { Effect, Layer } from "effect"
 import * as Http from "node:http"
 
 import { fetchUser } from "./services/user.js"
 import { sendNotifications } from "./services/notification.js"
+
+const ResourceLive = OtelResource.layer({
+  serviceName: "effect-span-tree-demo"
+})
+
+const OtelTracerLive = Tracer.layerGlobal.pipe(Layer.provide(ResourceLive))
+
+const SpanTreeLive = SpanTree.layerTracer().pipe(Layer.provide(OtelTracerLive))
 
 // ============================================================================
 // HTTP Routes
@@ -69,6 +89,7 @@ const userRoute = HttpRouter.get(
 
     const result = yield* fetchUser(id).pipe(
       Effect.withSpan("api.getUser"),
+      SpanTree.withSummary,
       Effect.either
     )
 
@@ -145,6 +166,7 @@ const complexRoute = HttpRouter.get(
 
     const result = yield* complexOperation.pipe(
       Effect.withSpan("api.complexOperation"),
+      SpanTree.withSummary,
       Effect.either
     )
 
@@ -185,6 +207,8 @@ const HttpLive = router.pipe(
   Layer.provide(ServerLive)
 )
 
+const MainLive = HttpLive.pipe(Layer.provideMerge(SpanTreeLive))
+
 // ============================================================================
 // Main
 // ============================================================================
@@ -206,4 +230,4 @@ Note: This is the base version without instrumentation.
 ${"=".repeat(60)}
 `)
 
-NodeRuntime.runMain(Layer.launch(HttpLive))
+NodeRuntime.runMain(Layer.launch(MainLive))

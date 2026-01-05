@@ -1,0 +1,21 @@
+version: "1.0"
+
+instrumentation:
+  enabled: true
+  logging: "on"
+
+  instrument_patterns:
+    - pattern: ".*"
+      enabled: true
+
+  ignore_patterns:
+    - pattern: "^health"
+
+  http_filtering:
+    enabled: true
+    ignore_routes:
+      - pattern: "^/health$"
+      - pattern: "^/metrics$"
+
+effect:
+  auto_extract_metadata: true
