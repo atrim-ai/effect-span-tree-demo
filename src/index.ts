@@ -18,7 +18,6 @@
  * - GET /health        - Health check
  * - GET /api/users/:id - Simple 6-level nested span example
  * - GET /api/complex/:id - Complex 10-level notification pipeline
- * - GET /api/audit-logs  - View captured span paths
  */
 
 import { HttpRouter, HttpServer, HttpServerResponse } from "@effect/platform"
@@ -28,7 +27,6 @@ import * as Http from "node:http"
 
 import { fetchUser } from "./services/user.js"
 import { sendNotifications } from "./services/notification.js"
-import { auditLogs } from "./lib/span-tree-logger.js"
 
 // ============================================================================
 // HTTP Routes
@@ -46,7 +44,6 @@ const welcomeRoute = HttpRouter.get(
       endpoints: {
         "/api/users/:id": "Simple 6-level nested span example",
         "/api/complex/:id": "Complex 10+ level notification pipeline",
-        "/api/audit-logs": "View captured trace summaries",
       },
     })
   })
@@ -165,14 +162,6 @@ const complexRoute = HttpRouter.get(
   })
 )
 
-/**
- * Audit logs route - View captured trace summaries
- */
-const auditRoute = HttpRouter.get(
-  "/api/audit-logs",
-  HttpServerResponse.json(auditLogs)
-)
-
 // ============================================================================
 // Router Composition
 // ============================================================================
@@ -181,8 +170,7 @@ const router = HttpRouter.empty.pipe(
   welcomeRoute,
   healthRoute,
   userRoute,
-  complexRoute,
-  auditRoute
+  complexRoute
 )
 
 // ============================================================================
@@ -214,15 +202,13 @@ Endpoints:
   GET /health            - Health check
   GET /api/users/:id     - Simple 6-level nested span example
   GET /api/complex/:id   - Complex 10+ level notification pipeline
-  GET /api/audit-logs    - View captured trace summaries
 
 Try these commands:
   curl http://localhost:3000/api/users/1
   curl http://localhost:3000/api/complex/1
-  curl http://localhost:3000/api/audit-logs
 
 ${"=".repeat(60)}
-Watch the console for span path logging from Effect.ensuring()!
+Note: This is the base version without instrumentation.
 ${"=".repeat(60)}
 `)
 
