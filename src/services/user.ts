@@ -5,11 +5,19 @@
  * api.getUser → fetchUser → validate → checkPermissions → db.query → transform
  */
 
-import { Effect, Duration } from "effect"
+import { Effect, Duration, Data } from "effect"
 
 // ============================================================================
 // Domain Types
 // ============================================================================
+
+export class InvalidUserIdError extends Data.TaggedError("InvalidUserIdError")<{
+  readonly userId: string
+}> {}
+
+export class UserNotFoundError extends Data.TaggedError("UserNotFoundError")<{
+  readonly userId: string
+}> {}
 
 export interface User {
   id: string
@@ -41,7 +49,7 @@ export const validateUserId = (userId: string) =>
     yield* Effect.sleep(Duration.millis(10))
 
     if (!userId.match(/^\d+$/)) {
-      return yield* Effect.fail(new Error("Invalid user ID format"))
+      return yield* Effect.fail(new InvalidUserIdError({ userId }))
     }
 
     return userId
@@ -75,7 +83,7 @@ export const queryDatabase = (userId: string) =>
 
     const user = mockUsers[userId]
     if (!user) {
-      return yield* Effect.fail(new Error(`User not found: ${userId}`))
+      return yield* Effect.fail(new UserNotFoundError({ userId }))
     }
 
     return user
@@ -99,7 +107,7 @@ export const transformUser = (user: User): Effect.Effect<TransformedUser> =>
  *
  * Creates hierarchy: fetchUser → validate → checkPermissions → db.query → transform
  */
-export const fetchUser = (userId: string): Effect.Effect<TransformedUser, Error> =>
+export const fetchUser = (userId: string): Effect.Effect<TransformedUser, InvalidUserIdError | UserNotFoundError> =>
   Effect.gen(function* () {
     yield* Effect.log(`Starting user fetch for: ${userId}`)
 
