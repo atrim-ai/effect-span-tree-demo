@@ -1,5 +1,10 @@
 # Effect-TS SpanTree Demo
 
+> [!IMPORTANT]
+> **Superseded — this example is no longer maintained.** To send telemetry from an Effect app to
+> Atrim, use `@effect/opentelemetry`'s OTLP layer, as described in the
+> [Atrim docs: Connect your app → Per-language setup → Effect](https://atrim.ai/docs/connect/#per-language-setup).
+
 This example demonstrates how **SpanTree** solves the use case from [Effect-TS/effect#5926](https://github.com/Effect-TS/effect/issues/5926):
 
 > "We wrap effects with span metadata and want to log the 'deepest' span path when the effect completes"
